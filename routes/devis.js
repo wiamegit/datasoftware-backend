@@ -2,13 +2,16 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 
-// Générer numéro devis automatique (ex: 096/42026)
+// Générer numéro devis automatique (ex: 010/426)
 async function genererNumero() {
-  const result = await pool.query(
-    'SELECT COUNT(*) FROM devis WHERE EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW())'
-  );
-  const count = parseInt(result.rows[0].count) + 1;
   const year = new Date().getFullYear().toString().slice(2);
+  const result = await pool.query(
+    `SELECT MAX(CAST(SPLIT_PART(numero, '/', 1) AS INTEGER)) as max_num 
+     FROM devis 
+     WHERE numero LIKE '%/4${year}'`
+  );
+  const maxNum = result.rows[0].max_num || 0;
+  const count = maxNum + 1;
   const numero = String(count).padStart(3, '0');
   return `${numero}/4${year}`;
 }
